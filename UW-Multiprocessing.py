@@ -11,6 +11,8 @@ import plotly.graph_objs as go
 import time
 import argparse
 import sys
+import csv
+import difflib
 
 def create_arg_parser():
     #Creates and returns the ArgumentParser object, which defines the arguments to the script
@@ -58,17 +60,37 @@ def getSpectralAverageAndWriteToFile(inputFilepath):
 
     # compute average intensity at each point across all spectra
     avg_i = [item / numspectra for item in total_i]
-    mz_i_tuples = list(zip(spectrum.mz, avg_i))
+    spectrumMZ = []
+    for mz in spectrum.mz:
+        spectrumMZ.append(round(mz,2))
+
+    mz_i_tuples = zip(spectrumMZ, avg_i)
+
+    xyFileName = inputFilepath + '.txt'
+
+    with open(xyFileName,'w', newline='') as f:
+        writer = csv.writer(f, delimiter='\t')
+        writer.writerows(mz_i_tuples)
 
     #Create plot for the average mz/i for the given file
-    plt.clf()
-    plt.plot(spectrum.mz, avg_i)
-    plt.xlabel("m/z")
-    plt.ylabel('Intensity')
+    #plt.clf()
+    #plt.plot(spectrum.mz, avg_i)
+    #plt.xlabel("m/z")
+    #plt.ylabel('Intensity')
 
     #Save plot to output file
-    plt.savefig(inputFilepath + '.png')
+    #plt.savefig(inputFilepath + '.png')
 
+def compareXYdata(fileProduced, fileExported, outputFilePath):
+    with open(fileProduced) as f1:
+        f1_text = f1.read()
+    with open(fileExported) as f2:
+        f2_text = f2.read()
+    lineDiff = []
+    for line in difflib.unified_diff(f1_text, f2_text, fromfile='file1', tofile='file2', lineterm=''):
+        lineDiff.append(line)
+    with open(outputFilePath + "/differences.txt", "w") as output:
+        output.write(str(lineDiff))
 
 if __name__ == '__main__':
     ## Enstantiating arg_parser to get arguments from user in command prompt
@@ -131,11 +153,14 @@ if __name__ == '__main__':
     print ("Time elapsed: ", time_elapsed1, " for ", nP, "processes with chunk size=", nC)
     print ("Average time per file: ", (time_elapsed1/(len(mzmlFileArray))))
 
+    compareXYdata('C:\BrukerFiles\MS2-ESI-ISO.mzML.txt', 'C:\BrukerFiles\MS2.xy', 'C:\BrukerFiles')
+
 
 
 
 
  
+
 
 
 
